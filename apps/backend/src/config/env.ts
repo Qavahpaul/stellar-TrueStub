@@ -27,6 +27,9 @@ export const envSchema = z.object({
   TRUSTLESS_WORK_WEBHOOK_SECRET: z.string().min(1).optional(),
   HASURA_GRAPHQL_ENDPOINT: z.string().url("HASURA_GRAPHQL_ENDPOINT must be a valid URL").optional(),
   HASURA_GRAPHQL_ADMIN_SECRET: z.string().min(1).optional(),
+
+  // Error tracking (#111) — unset in local dev, Sentry stays disabled
+  SENTRY_DSN: z.string().url("SENTRY_DSN must be a valid URL").optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
