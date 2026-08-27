@@ -15,7 +15,9 @@ import {
   handleError,
 } from "@/components/tw-blocks/handle-errors/handle";
 import { useEscrowContext } from "@/components/tw-blocks/providers/EscrowProvider";
-import { trustlineOptions } from "@/components/tw-blocks/wallet-kit/trustlines";
+import {
+  useTrustlineAssets,
+} from "@/components/tw-blocks/wallet-kit/trustlines";
 
 export function useInitializeEscrow() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -26,6 +28,10 @@ export function useInitializeEscrow() {
 
   const { walletAddress } = useWalletContext();
   const { deployEscrow } = useEscrowsMutations();
+
+  // Network-aware trustline assets — automatically uses the correct set
+  // for testnet or mainnet based on NEXT_PUBLIC_TRUSTLESS_NETWORK.
+  const trustlineAssets = useTrustlineAssets();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,7 +77,7 @@ export function useInitializeEscrow() {
   };
 
   const fillTemplateForm = () => {
-    const usdc = trustlineOptions.find((t) => t.label === "USDC");
+    const usdc = trustlineAssets.find((t) => t.label === "USDC");
 
     const templateData: z.infer<typeof formSchema> = {
       engagementId: "ENG-001",
@@ -136,7 +142,7 @@ export function useInitializeEscrow() {
       }
 
       // Find the trustline symbol and issuer from the address
-      const selectedTrustline = trustlineOptions.find(
+      const selectedTrustline = trustlineAssets.find(
         (t) => t.value === payload.trustline?.address
       );
       const trustlineSymbol = selectedTrustline?.label || "USDC";
@@ -210,5 +216,7 @@ export function useInitializeEscrow() {
     handleSubmit,
     handleAddMilestone,
     handleRemoveMilestone,
+    /** Network-aware list of supported trustline assets — use this to populate asset selectors. */
+    trustlineAssets,
   };
 }

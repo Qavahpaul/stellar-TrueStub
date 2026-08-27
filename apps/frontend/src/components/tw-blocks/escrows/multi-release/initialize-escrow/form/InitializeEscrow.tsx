@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInitializeEscrow } from "./useInitializeEscrow";
 import { Trash2, DollarSign, Percent, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { trustlineOptions } from "@/components/tw-blocks/wallet-kit/trustlines";
+// trustlineAssets are now provided by useInitializeEscrow() — no direct import needed.
 
 export const InitializeEscrowForm = () => {
   const {
@@ -33,6 +33,7 @@ export const InitializeEscrowForm = () => {
     handleAddMilestone,
     handleRemoveMilestone,
     fillTemplateForm,
+    trustlineAssets,
   } = useInitializeEscrow();
 
   const handleMilestoneAmountChange = (
@@ -175,7 +176,7 @@ export const InitializeEscrowForm = () => {
                       <SelectValue placeholder="Select trustline" />
                     </SelectTrigger>
                     <SelectContent>
-                      {trustlineOptions
+                      {trustlineAssets
                         .filter((option) => option.value)
                         .map((option, index) => (
                           <SelectItem
