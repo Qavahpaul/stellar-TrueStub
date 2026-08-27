@@ -14,12 +14,26 @@ import {
   POPULAR_WALLETS,
 } from "./utils/walletConfig";
 import { WalletType } from "./types/wallet.types";
+import { useWalletPersistence } from "./hooks/useWalletPersistence";
 
 interface WalletConnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onWalletConnected?: (walletInfo: any) => void;
 }
+
+/**
+ * Derive the initial tab from a persisted wallet type so returning users
+ * land on the same category they last used.
+ */
+const deriveTabFromWalletType = (
+  walletType: WalletType | null,
+): "popular" | "stellar" | "ethereum" => {
+  if (!walletType) return "popular";
+  if (STELLAR_WALLETS.includes(walletType)) return "stellar";
+  if (ETHEREUM_WALLETS.includes(walletType)) return "ethereum";
+  return "popular";
+};
 
 export default function WalletConnectionModal({
   isOpen,
@@ -37,6 +51,20 @@ export default function WalletConnectionModal({
     selectWallet,
     reset,
   } = useMultiWallet();
+
+  const { lastWalletType, saveWalletType, clearWalletType } =
+    useWalletPersistence();
+
+  // Pre-select the tab the user last visited.  Initialised to "popular" until
+  // the persistence hook hydrates from localStorage after mount.
+  const [activeTab, setActiveTab] = useState<"popular" | "stellar" | "ethereum">(
+    "popular",
+  );
+
+  // Once the hook hydrates, update the active tab to match the last selection.
+  useEffect(() => {
+    setActiveTab(deriveTabFromWalletType(lastWalletType));
+  }, [lastWalletType]);
 
   useEffect(() => {
     if (selectedWallet && onWalletConnected) {
@@ -58,6 +86,9 @@ export default function WalletConnectionModal({
   const handleConnect = async (walletType: WalletType) => {
     try {
       await connectWallet(walletType);
+      // Persist the chosen wallet type so the modal pre-selects it next time.
+      // Only the type identifier is stored — no keys or sensitive data.
+      saveWalletType(walletType);
     } catch (error) {
       console.error("Failed to connect wallet:", error);
     }
@@ -105,7 +136,7 @@ export default function WalletConnectionModal({
           </div>
         )}
 
-        <Tabs defaultValue="popular" className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "popular" | "stellar" | "ethereum")} className="w-full">
           <TabsList className="grid w-full grid-cols-3" aria-label="Wallet categories">
             <TabsTrigger value="popular">Popular</TabsTrigger>
             <TabsTrigger value="stellar">Stellar</TabsTrigger>
@@ -192,7 +223,10 @@ export default function WalletConnectionModal({
         {connectedWallets.length > 0 && (
           <Button
             variant="ghost"
-            onClick={reset}
+            onClick={() => {
+              reset();
+              clearWalletType();
+            }}
             className="w-full mt-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
             Disconnect All
