@@ -6,6 +6,8 @@ export {
   getAvailableWallets,
   isWalletAvailable,
 } from './hooks/useWalletDetection';
+export { useWalletSessionGuard } from './hooks/useWalletSessionGuard';
+export type { WalletSessionGuardOptions } from './hooks/useWalletSessionGuard';
 
 // Components
 export { WalletSelectionModal } from './components/WalletSelectionModal';
@@ -13,6 +15,8 @@ export { default as WalletConnectionModal } from './WalletConnectionModal';
 export { default as WalletOption } from './WalletOption';
 export { default as WalletDetection } from './WalletDetection';
 export { default as ConnectionStatus } from './ConnectionStatus';
+export { default as WalletReconnectPrompt } from './WalletReconnectPrompt';
+export type { WalletReconnectPromptProps } from './WalletReconnectPrompt';
 
 // Types
 export type * from './types/wallet.types';
