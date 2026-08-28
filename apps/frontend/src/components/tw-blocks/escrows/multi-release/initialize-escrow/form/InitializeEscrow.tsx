@@ -27,6 +27,8 @@ export const InitializeEscrowForm = () => {
   const {
     form,
     isSubmitting,
+    isRetrying,
+    retryCount,
     milestones,
     isAnyMilestoneEmpty,
     handleSubmit,
@@ -484,11 +486,16 @@ export const InitializeEscrowForm = () => {
           ))}
         </div>
 
-        <div className="flex justify-start">
+        <div className="flex flex-col items-start gap-2">
+          {isRetrying && (
+            <p className="text-sm text-muted-foreground animate-pulse">
+              Retrying... (attempt {retryCount + 1} of 3)
+            </p>
+          )}
           <Button
             className="w-full md:w-1/4 cursor-pointer"
             type="submit"
-            disabled={isAnyMilestoneEmpty || isSubmitting}
+            disabled={isAnyMilestoneEmpty || isSubmitting || isRetrying}
           >
             {isSubmitting ? (
               <div className="flex items-center">

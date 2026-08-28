@@ -9,6 +9,10 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import Illustration from "@/components/auth/ui/Illustration";
+import {
+  PasswordStrengthMeter,
+  getPasswordScore,
+} from "@/components/auth/ui/PasswordStrengthMeter";
 
 export default function NewPassword() {
   const [password, setPassword] = useState("");

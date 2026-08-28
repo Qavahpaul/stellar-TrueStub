@@ -16,9 +16,12 @@ import {
 } from "@/components/tw-blocks/handle-errors/handle";
 import { useEscrowContext } from "@/components/tw-blocks/providers/EscrowProvider";
 import { trustlineOptions } from "@/components/tw-blocks/wallet-kit/trustlines";
+import { retryWithBackoff } from "@/lib/retry";
 
 export function useInitializeEscrow() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isRetrying, setIsRetrying] = React.useState(false);
+  const [retryCount, setRetryCount] = React.useState(0);
 
   const { getMultiReleaseFormSchema } = useInitializeEscrowSchema();
   const formSchema = getMultiReleaseFormSchema();
@@ -196,18 +199,31 @@ export function useInitializeEscrow() {
       };
 
       /**
-       * Call the initialize escrow mutation
+       * Call the initialize escrow mutation with retry-with-backoff for
+       * transient failures (network timeouts, sequence races, 503/504/429).
+       * Definitive errors (400, insufficient funds, rejected) are not retried.
        *
        * @param payload - The final payload for the initialize escrow mutation
        * @param type - The type of the escrow
        * @param address - The address of the escrow
        */
       const response: InitializeMultiReleaseEscrowResponse =
-        (await deployEscrow.mutateAsync({
-          payload: finalPayload,
-          type: "multi-release",
-          address: walletAddress || "",
-        })) as InitializeMultiReleaseEscrowResponse;
+        (await retryWithBackoff(
+          () =>
+            deployEscrow.mutateAsync({
+              payload: finalPayload,
+              type: "multi-release",
+              address: walletAddress || "",
+            }),
+          {
+            maxAttempts: 3,
+            baseDelayMs: 1000,
+            onRetry: (attempt, _error) => {
+              setIsRetrying(true);
+              setRetryCount(attempt);
+            },
+          }
+        )) as InitializeMultiReleaseEscrowResponse;
 
       toast.success("Escrow initialized successfully");
 
@@ -216,6 +232,8 @@ export function useInitializeEscrow() {
       toast.error(handleError(error as ErrorResponse).message);
     } finally {
       setIsSubmitting(false);
+      setIsRetrying(false);
+      setRetryCount(0);
       form.reset();
     }
   });
@@ -223,6 +241,8 @@ export function useInitializeEscrow() {
   return {
     form,
     isSubmitting,
+    isRetrying,
+    retryCount,
     milestones,
     isAnyMilestoneEmpty,
     fillTemplateForm,
