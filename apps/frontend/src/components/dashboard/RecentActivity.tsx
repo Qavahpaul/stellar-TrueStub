@@ -3,6 +3,7 @@
 import { Activity, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { EscrowData } from './RoleEscrowDashboard';
 import { useTranslation } from 'react-i18next';
 
@@ -90,9 +91,11 @@ export function RecentActivity({ escrows }: RecentActivityProps) {
           <Activity className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground dark:text-gray-400 text-center py-4">
-            {t('dashboard.noActivity')}
-          </div>
+          <EmptyState
+            icon={Activity}
+            title={t('dashboard.noActivity')}
+            description={t('dashboard.noActivityDescription')}
+          />
         </CardContent>
       </Card>
     );
