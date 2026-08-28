@@ -20,3 +20,8 @@ src/graphql/generated/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/

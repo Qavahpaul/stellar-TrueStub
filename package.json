@@ -22,6 +22,7 @@
     "typecheck": "yarn workspace @truestub/frontend typecheck && yarn workspace @truestub/backend typecheck",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
+    "release": "semantic-release",
     "prepare": "husky"
   },
   "devDependencies": {
