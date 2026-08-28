@@ -8,6 +8,11 @@ export {
   getAvailableWallets,
   isWalletAvailable,
 } from './hooks/useWalletDetection';
+export {
+  useWalletPersistence,
+  getPersistedWalletType,
+  persistWalletType,
+} from './hooks/useWalletPersistence';
 
 // Components
 export { WalletSelectionModal } from './components/WalletSelectionModal';
