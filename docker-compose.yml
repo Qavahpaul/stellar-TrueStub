@@ -34,5 +34,21 @@ services:
     depends_on:
       - postgres
 
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
+      HASURA_GRAPHQL_ADMIN_SECRET: safetrust_admin_secret_2024
+    depends_on:
+      - postgres
+      - hasura
+    ports:
+      - "4000:4000"
+
 volumes:
   db_data:

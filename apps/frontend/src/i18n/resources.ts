@@ -270,6 +270,14 @@ const resources = {
         walletError: "Please connect your wallet first",
       },
 
+      wallet: {
+        networkMismatch: {
+          title: "Network mismatch",
+          description:
+            "Your wallet is on '{{actual}}' but the app expects '{{expected}}'. Please switch networks in your wallet before creating or funding an escrow.",
+        },
+      },
+
       propertyList: {
         title: "Available for rent in ",
         subtitle: "Costa Rica, San José",
@@ -732,6 +740,14 @@ const resources = {
 
       toast: {
         walletError: "Por favor conecta tu billetera primero",
+      },
+
+      wallet: {
+        networkMismatch: {
+          title: "Red incorrecta",
+          description:
+            "Tu billetera está en '{{actual}}' pero la aplicación espera '{{expected}}'. Por favor cambia de red en tu billetera antes de crear o financiar un fideicomiso.",
+        },
       },
 
       propertyList: {
