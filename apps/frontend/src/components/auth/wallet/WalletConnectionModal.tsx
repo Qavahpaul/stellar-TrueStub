@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWalletDetection } from "./hooks/useWalletDetection";
 import { useMultiWallet } from "./hooks/useMultiWallet";
+import { useWalletSessionGuard } from "./hooks/useWalletSessionGuard";
 import WalletOption from "./WalletOption";
 import ConnectionStatus from "./ConnectionStatus";
+import WalletReconnectPrompt from "./WalletReconnectPrompt";
 import {
   STELLAR_WALLETS,
   ETHEREUM_WALLETS,
@@ -85,6 +87,8 @@ export default function WalletConnectionModal({
 
   const handleConnect = async (walletType: WalletType) => {
     try {
+      // If the user is reconnecting after a session loss, clear the prompt.
+      setDisconnectedWallet(null);
       await connectWallet(walletType);
       // Persist the chosen wallet type so the modal pre-selects it next time.
       // Only the type identifier is stored — no keys or sensitive data.
@@ -106,29 +110,18 @@ export default function WalletConnectionModal({
     return connectedWallets.some((w) => w.walletType === walletType);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="wallet-connection-modal-title"
-    >
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-6">
-          <h2 id="wallet-connection-modal-title" className="text-xl font-bold text-gray-900 dark:text-white">
-            Connect Wallet
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close connect wallet modal"
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            ×
-          </button>
-        </div>
+    <>
+      {/* Reconnect prompt — shown outside the modal so it is visible even when
+          the modal is closed (e.g. the user is on an escrow creation form). */}
+      {disconnectedWallet && (
+        <WalletReconnectPrompt
+          affectedWalletType={disconnectedWallet.walletType}
+          reason={disconnectedWallet.reason}
+          onReconnect={handleReconnect}
+          onDismiss={handleDismissReconnect}
+        />
+      )}
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
@@ -239,7 +232,7 @@ export default function WalletConnectionModal({
             transactions
           </p>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
