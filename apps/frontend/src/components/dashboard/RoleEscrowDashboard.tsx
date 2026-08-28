@@ -534,7 +534,9 @@ export function RoleEscrowDashboard({
                 </h2>
               </div>
               <div className="p-4">
-                <QuickActions userRole={userRole} />
+                <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Quick Actions" />}>
+                  <QuickActions userRole={userRole} />
+                </ErrorBoundaryWithCache>
               </div>
             </div>
 
