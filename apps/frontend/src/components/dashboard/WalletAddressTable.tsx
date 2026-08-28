@@ -3,6 +3,7 @@
 import { Copy, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -21,6 +22,8 @@ interface WalletEntry {
 
 interface WalletAddressTableProps {
   wallets: WalletEntry[];
+  /** Show skeleton rows instead of wallet data while a query resolves. */
+  isLoading?: boolean;
 }
 
 function truncateAddress(address: string): string {
@@ -28,7 +31,30 @@ function truncateAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
-export function WalletAddressTable({ wallets }: WalletAddressTableProps) {
+/** Skeleton placeholder for a single table row while data loads. */
+function WalletRowSkeleton() {
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-5 w-14 rounded-full" />
+        </div>
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-20" />
+      </TableCell>
+      <TableCell className="text-right">
+        <Skeleton className="h-8 w-16 ml-auto" />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+export function WalletAddressTable({
+  wallets,
+  isLoading = false,
+}: WalletAddressTableProps) {
   async function handleCopy(wallet: WalletEntry) {
     try {
       await navigator.clipboard.writeText(wallet.fullAddress ?? wallet.address);
@@ -59,30 +85,37 @@ export function WalletAddressTable({ wallets }: WalletAddressTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {wallets.map((wallet) => (
-                <TableRow key={wallet.address}>
-                  <TableCell className="font-mono text-sm">
-                    {truncateAddress(wallet.address)}
-                    {wallet.isPrimary && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                        Primary
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm">{wallet.network}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopy(wallet)}
-                      className="gap-1"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {isLoading ? (
+                // Show 3 skeleton rows while wallets are being fetched
+                Array.from({ length: 3 }).map((_, i) => (
+                  <WalletRowSkeleton key={i} />
+                ))
+              ) : (
+                wallets.map((wallet) => (
+                  <TableRow key={wallet.address}>
+                    <TableCell className="font-mono text-sm">
+                      {truncateAddress(wallet.address)}
+                      {wallet.isPrimary && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                          Primary
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">{wallet.network}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopy(wallet)}
+                        className="gap-1"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
