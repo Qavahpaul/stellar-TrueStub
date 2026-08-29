@@ -1,6 +1,7 @@
 "use client";
 
-import { Copy, Plus } from "lucide-react";
+import { Copy, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+const PAGE_SIZE_OPTIONS = [5, 10, 25] as const;
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 interface WalletEntry {
   address: string;
@@ -31,30 +35,16 @@ function truncateAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
-/** Skeleton placeholder for a single table row while data loads. */
-function WalletRowSkeleton() {
-  return (
-    <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-5 w-14 rounded-full" />
-        </div>
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-4 w-20" />
-      </TableCell>
-      <TableCell className="text-right">
-        <Skeleton className="h-8 w-16 ml-auto" />
-      </TableCell>
-    </TableRow>
-  );
-}
+export function WalletAddressTable({ wallets }: WalletAddressTableProps) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(5);
 
-export function WalletAddressTable({
-  wallets,
-  isLoading = false,
-}: WalletAddressTableProps) {
+  const totalItems = wallets.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pageItems = wallets.slice(startIndex, startIndex + pageSize);
+
   async function handleCopy(wallet: WalletEntry) {
     try {
       await navigator.clipboard.writeText(wallet.fullAddress ?? wallet.address);
@@ -85,13 +75,14 @@ export function WalletAddressTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                // Show 3 skeleton rows while wallets are being fetched
-                Array.from({ length: 3 }).map((_, i) => (
-                  <WalletRowSkeleton key={i} />
-                ))
+              {pageItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-16 text-center text-muted-foreground">
+                    No wallet addresses found.
+                  </TableCell>
+                </TableRow>
               ) : (
-                wallets.map((wallet) => (
+                pageItems.map((wallet) => (
                   <TableRow key={wallet.address}>
                     <TableCell className="font-mono text-sm">
                       {truncateAddress(wallet.address)}
@@ -119,6 +110,58 @@ export function WalletAddressTable({
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination controls — only shown when total rows exceed minimum page size */}
+        {totalItems > PAGE_SIZE_OPTIONS[0] && (
+          <div className="flex items-center justify-between pt-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Rows per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value) as PageSize);
+                  setPage(1);
+                }}
+                className="rounded border border-input bg-background px-2 py-1 text-sm"
+                aria-label="Rows per page"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span>
+                {totalItems === 0
+                  ? '0 results'
+                  : `${startIndex + 1}–${Math.min(startIndex + pageSize, totalItems)} of ${totalItems}`}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

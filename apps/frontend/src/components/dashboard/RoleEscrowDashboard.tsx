@@ -21,6 +21,18 @@ import { QuickActions } from "./QuickActions";
 import { EscrowTable } from "./EscrowTable";
 import { AnalyticsDashboard } from "./analytics";
 import { useTranslation } from "react-i18next";
+import { ErrorBoundaryWithCache } from "@/components/performance/ErrorBoundaryWithCache";
+
+/** Compact fallback shown when a single dashboard widget throws. */
+function SimpleErrorFallback({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center p-6 rounded-xl border border-red-500/20 bg-red-50 dark:bg-red-900/10 text-center">
+      <p className="text-sm text-red-600 dark:text-red-400">
+        Failed to load <span className="font-semibold">{label}</span>. Please refresh the page.
+      </p>
+    </div>
+  );
+}
 
 // Placeholder functions for notifications - in a real app, these would be API calls
 async function checkPendingNotifications(): Promise<NotificationData[]> {
@@ -528,7 +540,9 @@ export function RoleEscrowDashboard({
         {/* Analytics Panel (toggled from the header) */}
         {showAnalytics && (
           <div className="mb-6">
-            <AnalyticsDashboard />
+            <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Analytics Dashboard" />}>
+              <AnalyticsDashboard />
+            </ErrorBoundaryWithCache>
           </div>
         )}
 
@@ -557,7 +571,9 @@ export function RoleEscrowDashboard({
                 </h2>
               </div>
               <div className="p-4">
-                <EscrowsByStatus escrows={escrows} userRole={userRole} />
+                <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Escrows by Status" />}>
+                  <EscrowsByStatus escrows={escrows} userRole={userRole} />
+                </ErrorBoundaryWithCache>
               </div>
             </div>
 
@@ -582,7 +598,9 @@ export function RoleEscrowDashboard({
                 </h2>
               </div>
               <div className="p-4">
-                <RecentActivity escrows={escrows} isLoading={isLoading} />
+                <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Recent Activity" />}>
+                  <RecentActivity escrows={escrows} />
+                </ErrorBoundaryWithCache>
               </div>
             </div>
           </div>
@@ -610,7 +628,9 @@ export function RoleEscrowDashboard({
                 </h2>
               </div>
               <div className="p-4">
-                <QuickActions userRole={userRole} />
+                <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Quick Actions" />}>
+                  <QuickActions userRole={userRole} />
+                </ErrorBoundaryWithCache>
               </div>
             </div>
 
@@ -943,7 +963,9 @@ export function RoleEscrowDashboard({
             </div>
           </div>
           <div className="overflow-x-auto">
-            <EscrowTable escrows={filteredTransactions} userRole={userRole} isLoading={isLoading} />
+            <ErrorBoundaryWithCache fallback={<SimpleErrorFallback label="Escrow Table" />}>
+              <EscrowTable escrows={filteredTransactions} userRole={userRole} />
+            </ErrorBoundaryWithCache>
           </div>
         </div>
       </div>
