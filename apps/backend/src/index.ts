@@ -17,6 +17,10 @@ import { disputesRouter } from "./routes/disputes";
 
 export function createApp(): Express {
   const app = express();
+
+  // Sentry request handler must be the very first middleware.
+  app.use(sentryRequestHandler());
+
   app.use(helmetMiddleware);
   app.use(corsMiddleware);
   app.use(requestLogger);
