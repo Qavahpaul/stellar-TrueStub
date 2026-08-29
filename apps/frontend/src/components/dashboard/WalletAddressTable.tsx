@@ -4,6 +4,7 @@ import { Copy, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -25,6 +26,8 @@ interface WalletEntry {
 
 interface WalletAddressTableProps {
   wallets: WalletEntry[];
+  /** Show skeleton rows instead of wallet data while a query resolves. */
+  isLoading?: boolean;
 }
 
 function truncateAddress(address: string): string {
