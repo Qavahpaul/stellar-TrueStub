@@ -108,6 +108,8 @@ export default function ErrorSuppressor() {
 
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
 
+    // Restore originals on unmount so the patch does not outlive the
+    // component that installed it.
     return () => {
       console.error = originalError;
       console.warn = originalWarn;
@@ -120,3 +122,14 @@ export default function ErrorSuppressor() {
 
   return null;
 }
+
+/**
+ * Legacy export alias — kept for backwards compatibility while callers are
+ * updated to use the more descriptive `WalletNoiseFilter` name.
+ *
+ * @deprecated Use `WalletNoiseFilter` instead.
+ */
+export { WalletNoiseFilter as ErrorSuppressor };
+
+/** Named export for direct use. */
+export { WalletNoiseFilter };
