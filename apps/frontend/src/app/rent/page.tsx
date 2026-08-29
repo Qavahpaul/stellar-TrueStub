@@ -1,6 +1,6 @@
 "use client";
 
-import type { EventListing } from "@/@types/event";
+import type { EventListing } from "@/types/event";
 import { TicketListingGrid, SectionTabs, ListingFilterSidebar, EventHeader } from "@/components/events";
 import { STUB_EVENTS } from "@/lib/mockData/events";
 import { useRouter } from "next/navigation";
