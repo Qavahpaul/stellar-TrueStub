@@ -160,7 +160,7 @@ The monorepo also has `apps/backend` and `contracts/`, but both are currently un
 ## 🛠️ **Tech Stack**
 
 - **Frontend**: TypeScript, Next.js 15, Tailwind CSS
-- **Auth**: Firebase Authentication (Email/Password, Google OAuth)
+- **Auth**: Firebase Authentication (Email/Password)
 - **GraphQL**: Apollo Client 4, Hasura GraphQL Engine
 - **Blockchain**: Stellar, TrustlessWork API
 - **Wallet**: Freighter, Albedo, LOBSTR
