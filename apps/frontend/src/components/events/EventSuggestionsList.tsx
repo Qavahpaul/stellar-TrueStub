@@ -1,6 +1,6 @@
 'use client';
 
-import type { EventListing } from '@/@types/event';
+import type { EventListing } from '@/types/event';
 import { useEffect, useState } from 'react';
 import { CalendarSearch } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';

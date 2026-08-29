@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from 'react';
-import { ArrowUp, ArrowDown, ArrowUpDown, MoreHorizontal, Eye, FileText, CheckCircle2, XCircle, Inbox, AlertTriangle } from 'lucide-react';
+import { MoreHorizontal, Eye, FileText, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,11 +28,33 @@ import { EscrowData } from './RoleEscrowDashboard';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+
 interface EscrowTableProps {
   escrows: EscrowData[];
   userRole: 'guest' | 'event' | 'admin';
-  error?: string | null;
-  onRetry?: () => void;
+  /** Show skeleton rows instead of data while a GraphQL query resolves. */
+  isLoading?: boolean;
+}
+
+/** Skeleton placeholder for a single table row while data loads. */
+function EscrowTableRowSkeleton() {
+  return (
+    <TableRow className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-32 mb-1" />
+        <Skeleton className="h-3 w-16" />
+      </TableCell>
+      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+      <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+      <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+    </TableRow>
+  );
 }
 
 const statusBadgeVariant = {
@@ -43,14 +66,20 @@ const statusBadgeVariant = {
   cancelled: 'destructive',
 } as const;
 
-type SortKey = 'purchaseId' | 'eventName' | 'transferDate' | 'eventDate' | 'amount' | 'status';
-type SortDirection = 'asc' | 'desc';
-
-export function EscrowTable({ escrows, userRole, error = null, onRetry }: EscrowTableProps) {
+export function EscrowTable({ escrows, userRole, isLoading = false }: EscrowTableProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(10);
+
+  const totalItems = escrows.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pageItems = escrows.slice(startIndex, startIndex + pageSize);
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -78,11 +107,11 @@ export function EscrowTable({ escrows, userRole, error = null, onRetry }: Escrow
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return '—';
+    if (!dateString) return '-';
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch (e) {
-      return '—';
+      return '-';
     }
   };
 
@@ -240,84 +269,81 @@ export function EscrowTable({ escrows, userRole, error = null, onRetry }: Escrow
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-700">
-      {escrows.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={t('dashboard.noEscrowsTitle')}
-          description={t('dashboard.noEscrowsDescription')}
-        />
-      ) : (
-        <>
-          {/* Mobile: stacked cards, no horizontal scroll */}
-          <div className="md:hidden">
-            {sortedEscrows.map(renderMobileCard)}
-          </div>
-
-          {/* Desktop / tablet: full table */}
-          <div className="hidden md:block">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-700">
-                <TableHead className="w-[50px] text-gray-600 dark:text-gray-300 font-semibold">
-                  <Checkbox aria-label="Select all" />
-                </TableHead>
-                <SortableHeader sortKey="purchaseId" label={t('dashboard.tablePurchaseId')} />
-                <SortableHeader sortKey="eventName" label={t('dashboard.tableEventName')} />
-                <SortableHeader sortKey="transferDate" label={t('dashboard.transferDate')} />
-                <SortableHeader sortKey="eventDate" label={t('dashboard.tableDates')} />
-                <SortableHeader sortKey="amount" label={t('dashboard.tableAmount')} />
-                <SortableHeader sortKey="status" label={t('dashboard.tableStatus')} />
-                <TableHead className="text-right text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableActions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedEscrows.map((escrow) => (
-                <TableRow key={escrow.id} className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                  <TableCell>
-                    <Checkbox aria-label={`Select escrow ${escrow.id}`} />
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-gray-500 dark:text-gray-400">
-                    {escrow.metadata?.purchaseId || '—'}
-                  </TableCell>
-                  <TableCell className="text-gray-900 dark:text-white">
-                    <div className="font-medium">
-                      {escrow.metadata?.eventName || '—'}
-                    </div>
-                    <div className="text-xs text-muted-foreground dark:text-slate-400">
-                      {escrow.marker ? `${escrow.marker.slice(0, 6)}...${escrow.marker.slice(-4)}` : ''}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-gray-900 dark:text-white">{formatDate(escrow.metadata?.transferDate)}</TableCell>
-                  <TableCell className="text-gray-900 dark:text-white">{formatDate(escrow.metadata?.eventDate)}</TableCell>
-                  <TableCell className="text-gray-900 dark:text-white">
-                    {formatCurrency(escrow.amount, escrow.asset.code)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={statusBadgeVariant[escrow.status] || 'outline'}
-                      className="whitespace-nowrap"
-                    >
-                      {getStatusText(escrow.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0" aria-label="Open menu">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>{t('dashboard.tableActions')}</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(escrow.id)}
-                            className="cursor-pointer"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            {t('dashboard.viewDetails')}
-                          </DropdownMenuItem>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-700">
+            <TableHead className="w-[50px] text-gray-600 dark:text-gray-300 font-semibold">
+              <Checkbox aria-label="Select all" />
+            </TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tablePurchaseId')}</TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableEventName')}</TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.transferDate')}</TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableDates')}</TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableAmount')}</TableHead>
+            <TableHead className="text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableStatus')}</TableHead>
+            <TableHead className="text-right text-gray-600 dark:text-gray-300 font-semibold">{t('dashboard.tableActions')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {pageItems.length === 0 ? (
+            <TableRow className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <TableCell colSpan={8} className="h-24 text-center text-gray-500 dark:text-slate-400">
+                {t('interestedPeople.table.notFound')}
+              </TableCell>
+            </TableRow>
+          ) : (
+            pageItems.map((escrow) => (
+              <TableRow key={escrow.id} className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                <TableCell>
+                  <Checkbox aria-label={`Select escrow ${escrow.id}`} />
+                </TableCell>
+                <TableCell className="font-mono text-sm text-gray-500 dark:text-gray-400">
+                  {escrow.metadata?.purchaseId || '-'}
+                </TableCell>
+                <TableCell className="text-gray-900 dark:text-white">
+                  <div className="font-medium">
+                    {escrow.metadata?.eventName || '-'}
+                  </div>
+                  <div className="text-xs text-muted-foreground dark:text-slate-400">
+                    {escrow.marker ? `${escrow.marker.slice(0, 6)}...${escrow.marker.slice(-4)}` : ''}
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-900 dark:text-white">{formatDate(escrow.metadata?.transferDate)}</TableCell>
+                <TableCell className="text-gray-900 dark:text-white">{formatDate(escrow.metadata?.eventDate)}</TableCell>
+                <TableCell className="text-gray-900 dark:text-white">
+                  {formatCurrency(escrow.amount, escrow.asset.code)}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={statusBadgeVariant[escrow.status] || 'outline'}
+                    className="whitespace-nowrap"
+                  >
+                    {getStatusText(escrow.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" aria-label="Open menu">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{t('dashboard.tableActions')}</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => handleViewDetails(escrow.id)}
+                          className="cursor-pointer"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {t('dashboard.viewDetails')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer">
+                          <FileText className="h-4 w-4 mr-2" />
+                          {t('common.view')}
+                        </DropdownMenuItem>
+                        {escrow.status === 'completed' && (
                           <DropdownMenuItem className="cursor-pointer">
                             <FileText className="h-4 w-4 mr-2" />
                             {t('common.view')}
@@ -327,27 +353,67 @@ export function EscrowTable({ escrows, userRole, error = null, onRetry }: Escrow
                               <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
                               {t('dashboard.statusCompleted')}
                             </DropdownMenuItem>
-                          )}
-                          {escrow.status !== 'cancelled' && escrow.status !== 'completed' && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600 cursor-pointer">
-                                <XCircle className="h-4 w-4 mr-2" />
-                                {t('common.cancel')}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      {/* Pagination controls */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <span>Rows per page:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value) as PageSize);
+              setPage(1);
+            }}
+            className="rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-sm text-gray-900 dark:text-gray-300"
+            aria-label="Rows per page"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+          <span>
+            {totalItems === 0
+              ? '0 results'
+              : `${startIndex + 1}–${Math.min(startIndex + pageSize, totalItems)} of ${totalItems}`}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
