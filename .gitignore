@@ -15,6 +15,7 @@ node_modules
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
@@ -27,6 +28,35 @@ yarn-error.log*
 !.env.example
 !apps/backend/.env.example
 
+# test artifacts
+coverage/
+**/coverage/
+**/__snapshots__/
+**/test_snapshots/
+*.snap
+junit.xml
+**/junit.xml
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.suo
+*.user
+.project
+.classpath
+
+# OS
+.DS_Store
+*.pem
+
+# Next.js / build output (workspace-level, belt-and-suspenders)
+**/.next/
+**/out/
+**/build/
+
+# typescript incremental build info
+*.tsbuildinfo
 
 # rust / soroban contracts build output
 **/target/
