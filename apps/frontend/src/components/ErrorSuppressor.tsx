@@ -3,76 +3,105 @@
 import { useEffect } from "react";
 
 /**
- * WalletNoiseFilter — suppresses known-harmless console noise from
- * WalletConnect / Reown wallet SDKs.
+ * Known-noisy messages from wallet / state-management libraries that are
+ * safe to suppress in the browser console.  Each entry is the *exact* string
+ * (or the narrowest reliable prefix) from the upstream bug, together with a
+ * reference so we know when it is safe to remove the suppression rule.
  *
- * ## Usage
- *
- * Mount this component **inside** the wallet provider tree, as close to the
- * wallet SDK initialisation as possible:
- *
- * ```tsx
- * <WalletProvider>
- *   <WalletNoiseFilter />
- *   {children}
- * </WalletProvider>
- * ```
- *
- * **Do NOT** render this at the root layout level (`app/layout.tsx`).
- * Placing it at the root permanently patches `console.error` / `console.warn`
- * for the entire app session and makes it harder to trace real errors.
- *
- * ## How it works
- *
- * On mount it wraps `console.error`, `console.warn`, and the `unhandledrejection`
- * event with filters that drop known-harmless SDK noise.
- * The **originals are fully restored on unmount** — i.e. when the wallet provider
- * tree unmounts — so the patch is scoped to the wallet provider's lifetime.
- *
- * ## Patterns
- *
- * Filters are matched against exact substrings known to originate from
- * WalletConnect / Reown internals. Avoid broadening them: a filter like
- * `"reown"` would also suppress any app-level log that happens to mention
- * the word "reown" in a different context.
+ * Rules:
+ *  - Match on the exact message text, NOT on a bare library-name substring.
+ *  - A real error whose message merely contains the word "reown", "valtio",
+ *    etc. must still reach the console (and Sentry — see sentry.client.config.ts).
+ *  - When an upstream issue is fixed, remove the corresponding entry here.
  */
-export default function WalletNoiseFilter() {
+const SUPPRESSED_CONSOLE_PATTERNS: ReadonlyArray<{
+  /** Exact string to match (compared with ===) or narrow prefix (startsWith). */
+  match: (msg: string) => boolean;
+  /** Upstream issue / library version that introduced the noise. */
+  ref: string;
+}> = [
+  {
+    // WalletConnect / Reown: session request is cancelled when the user closes
+    // the modal without connecting.
+    // https://github.com/WalletConnect/walletconnect-monorepo/issues/4326
+    match: (msg) => msg === "Connection request reset. Please try again.",
+    ref: "WalletConnect #4326 — Connection request reset",
+  },
+  {
+    // Reown AppKit logs its own package name on initialisation in some builds.
+    // Only suppress the *exact* initialisation line, not any real errors.
+    // https://github.com/reown-com/appkit/issues/2788
+    match: (msg) =>
+      msg.startsWith("[Reown] AppKit initialized") ||
+      msg.startsWith("[reown/appkit]"),
+    ref: "Reown AppKit #2788 — noisy init log",
+  },
+  {
+    // valtio warns about reading a non-reactive property during SSR hydration.
+    // https://github.com/pmndrs/valtio/issues/327
+    match: (msg) =>
+      msg ===
+      "valtio: proxy is not reactive during SSR/hydration. use useSnapshot instead.",
+    ref: "valtio #327 — SSR proxy warning",
+  },
+  {
+    // @walletconnect/ethereum-provider logs a benign "No matching key" warning
+    // when a previously-cached session key is no longer present.
+    // https://github.com/WalletConnect/walletconnect-monorepo/issues/3901
+    match: (msg) =>
+      msg.startsWith(
+        "No matching key. session_delete is a no-op for topic:",
+      ) ||
+      msg.startsWith(
+        "No matching key. session_expire is a no-op for topic:",
+      ),
+    ref: "WalletConnect ethereum-provider #3901 — no-op session delete/expire",
+  },
+];
+
+/**
+ * Known-noisy unhandled-rejection reasons (Promise rejections).
+ */
+const SUPPRESSED_REJECTION_PATTERNS: ReadonlyArray<{
+  match: (reason: unknown) => boolean;
+  ref: string;
+}> = [
+  {
+    // WalletConnect throws "Connection request reset" as an unhandled rejection
+    // when the user dismisses the modal.
+    match: (reason) =>
+      reason instanceof Error &&
+      reason.message === "Connection request reset. Please try again.",
+    ref: "WalletConnect #4326 — Connection request reset (rejection)",
+  },
+];
+
+export default function ErrorSuppressor() {
   useEffect(() => {
     const originalError = console.error;
     const originalWarn = console.warn;
 
-    // Patterns that reliably identify WalletConnect / Reown / valtio noise.
-    // Keep these as specific as possible — broad substrings can hide real bugs.
-    const SUPPRESSED_PATTERNS: ReadonlyArray<string> = [
-      // WalletConnect session management — not actionable by the app
-      "Connection request reset. Please try again.",
-      // WalletConnect / Reown package identifiers in stack traces / prefixes
-      "@walletconnect/",
-      "@reown/",
-      // valtio proxy warnings emitted by Reown's state management
-      "[valtio]",
-      // ethereum-provider internal heartbeat / version warnings
-      "ethereum-provider",
-    ];
-
     const shouldSuppress = (args: unknown[]): boolean => {
-      const message = args
-        .map((a) => (typeof a === "string" ? a : String(a)))
-        .join(" ");
-      return SUPPRESSED_PATTERNS.some((p) => message.includes(p));
+      const message = args.map(String).join(" ");
+      return SUPPRESSED_CONSOLE_PATTERNS.some((rule) => rule.match(message));
     };
 
     console.error = (...args: unknown[]) => {
-      if (!shouldSuppress(args)) originalError.apply(console, args);
+      if (shouldSuppress(args)) return;
+      originalError.apply(console, args);
     };
 
     console.warn = (...args: unknown[]) => {
-      if (!shouldSuppress(args)) originalWarn.apply(console, args);
+      if (shouldSuppress(args)) return;
+      originalWarn.apply(console, args);
     };
 
-    const handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
-      const msg: string = event.reason?.message ?? "";
-      if (SUPPRESSED_PATTERNS.some((p) => msg.includes(p))) {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (
+        SUPPRESSED_REJECTION_PATTERNS.some((rule) =>
+          rule.match(event.reason),
+        )
+      ) {
         event.preventDefault();
       }
     };
