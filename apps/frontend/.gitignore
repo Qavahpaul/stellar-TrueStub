@@ -25,3 +25,14 @@ next-env.d.ts
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+
+# test snapshots
+__snapshots__/
+*.snap
+
+# storybook
+storybook-static/
+.storybook/public/
+
+# jest cache
+.jest-cache/

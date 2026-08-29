@@ -30,3 +30,28 @@ yarn-error.log*
 
 # rust / soroban contracts build output
 **/target/
+
+# test snapshots
+**/__snapshots__/
+**/*.snap
+
+# coverage reports
+coverage/
+lcov.info
+*.lcov
+
+# editor / IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# turbo / build caches
+.turbo/
+.cache/
