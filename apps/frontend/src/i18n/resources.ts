@@ -185,8 +185,13 @@ const resources = {
         max: "Max $",
         retry: "Retry",
         noActivity: "No recent activity",
+        noActivityDescription: "Activity on your escrows will show up here.",
         itemsPerPage: "Items per page",
         showingCount: "Showing {{current}} of {{total}}",
+        exportCsv: "Export CSV",
+        errorLoadingEscrows: "Couldn't load escrows",
+        noEscrowsTitle: "No escrows yet",
+        noEscrowsDescription: "Once you create or receive an escrow, it will show up here.",
 
         // Status badges
         statusPending: "Pending",
@@ -299,6 +304,14 @@ const resources = {
 
       toast: {
         walletError: "Please connect your wallet first",
+      },
+
+      wallet: {
+        networkMismatch: {
+          title: "Network mismatch",
+          description:
+            "Your wallet is on '{{actual}}' but the app expects '{{expected}}'. Please switch networks in your wallet before creating or funding an escrow.",
+        },
       },
 
       propertyList: {
@@ -681,8 +694,13 @@ const resources = {
         max: "Máx $",
         retry: "Reintentar",
         noActivity: "Sin actividad reciente",
+        noActivityDescription: "La actividad de tus fideicomisos aparecerá aquí.",
         itemsPerPage: "Elementos por página",
         showingCount: "Mostrando {{current}} de {{total}}",
+        exportCsv: "Exportar CSV",
+        errorLoadingEscrows: "No se pudieron cargar los fideicomisos",
+        noEscrowsTitle: "Aún no hay fideicomisos",
+        noEscrowsDescription: "Cuando crees o recibas un fideicomiso, aparecerá aquí.",
 
         // Status badges
         statusPending: "Pendiente",
@@ -795,6 +813,14 @@ const resources = {
 
       toast: {
         walletError: "Por favor conecta tu billetera primero",
+      },
+
+      wallet: {
+        networkMismatch: {
+          title: "Red incorrecta",
+          description:
+            "Tu billetera está en '{{actual}}' pero la aplicación espera '{{expected}}'. Por favor cambia de red en tu billetera antes de crear o financiar un fideicomiso.",
+        },
       },
 
       propertyList: {
