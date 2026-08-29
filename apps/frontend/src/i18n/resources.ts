@@ -154,8 +154,13 @@ const resources = {
         max: "Max $",
         retry: "Retry",
         noActivity: "No recent activity",
+        noActivityDescription: "Activity on your escrows will show up here.",
         itemsPerPage: "Items per page",
         showingCount: "Showing {{current}} of {{total}}",
+        exportCsv: "Export CSV",
+        errorLoadingEscrows: "Couldn't load escrows",
+        noEscrowsTitle: "No escrows yet",
+        noEscrowsDescription: "Once you create or receive an escrow, it will show up here.",
 
         // Status badges
         statusPending: "Pending",
@@ -626,8 +631,13 @@ const resources = {
         max: "Máx $",
         retry: "Reintentar",
         noActivity: "Sin actividad reciente",
+        noActivityDescription: "La actividad de tus fideicomisos aparecerá aquí.",
         itemsPerPage: "Elementos por página",
         showingCount: "Mostrando {{current}} de {{total}}",
+        exportCsv: "Exportar CSV",
+        errorLoadingEscrows: "No se pudieron cargar los fideicomisos",
+        noEscrowsTitle: "Aún no hay fideicomisos",
+        noEscrowsDescription: "Cuando crees o recibas un fideicomiso, aparecerá aquí.",
 
         // Status badges
         statusPending: "Pendiente",

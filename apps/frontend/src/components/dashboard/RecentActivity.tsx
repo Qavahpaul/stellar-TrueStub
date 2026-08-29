@@ -130,9 +130,11 @@ export function RecentActivity({ escrows, isLoading = false }: RecentActivityPro
           <Activity className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground dark:text-gray-400 text-center py-4">
-            {t('dashboard.noActivity')}
-          </div>
+          <EmptyState
+            icon={Activity}
+            title={t('dashboard.noActivity')}
+            description={t('dashboard.noActivityDescription')}
+          />
         </CardContent>
       </Card>
     );

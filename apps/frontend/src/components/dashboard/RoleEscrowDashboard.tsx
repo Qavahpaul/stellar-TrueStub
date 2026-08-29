@@ -225,6 +225,18 @@ export function RoleEscrowDashboard({
     return result;
   }, [statusFilter, minAmount, maxAmount, sortBy, transferFrom, transferTo, eventFrom, eventTo, escrows]);
 
+  const handleExportTransactions = () => {
+    const rows: TransactionRow[] = filteredTransactions.map((escrow) => ({
+      purchaseId: escrow.metadata?.purchaseId || escrow.id,
+      event: escrow.metadata?.eventName || "",
+      transferInitiated: escrow.metadata?.transferDate || "",
+      transferCompleted: escrow.metadata?.eventDate || "",
+      amount: escrow.amount,
+      status: escrow.status,
+    }));
+    exportTransactionsToCSV(rows);
+  };
+
   // Real-time updates using Trustless Work notifications
   useEffect(() => {
     if (isLoading) return;
@@ -953,6 +965,18 @@ export function RoleEscrowDashboard({
                   </button>
                 </PopoverContent>
               </Popover>
+              <button
+                onClick={handleExportTransactions}
+                disabled={filteredTransactions.length === 0}
+                className="flex items-center gap-2 text-sm
+                           border border-slate-600 rounded-lg
+                           px-3 py-1.5 hover:bg-slate-700
+                           transition-colors text-gray-700 dark:text-gray-300
+                           disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Download className="h-4 w-4" />
+                <span>{t("dashboard.exportCsv")}</span>
+              </button>
               <Link
                 href="/dashboard/escrow"
                 className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
