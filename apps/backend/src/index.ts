@@ -9,14 +9,11 @@ import { errorHandler } from "./middleware/errorHandler";
 import { healthRouter } from "./routes/health";
 import { listingsRouter } from "./routes/listings";
 import { webhookRouter } from "./routes/webhooks";
-import {
-  initSentry,
-  sentryRequestHandler,
-  sentryErrorHandler,
-} from "./config/sentry";
-
-// Initialise Sentry as early as possible so it can capture startup errors.
-initSentry();
+// Issues #153–#156
+import { refundsRouter } from "./routes/refunds";
+import { transfersRouter } from "./routes/transfers";
+import { changelogRouter } from "./routes/changelog";
+import { disputesRouter } from "./routes/disputes";
 
 export function createApp(): Express {
   const app = express();
@@ -32,10 +29,14 @@ export function createApp(): Express {
   app.use("/health", healthRouter);
   app.use("/api/listings", listingsRouter);
   app.use("/webhooks", webhookRouter);
-
-  // Sentry error handler must come after routes but before our custom handler.
-  app.use(sentryErrorHandler());
-
+  // #153 — Refund idempotency
+  app.use("/api/refunds", refundsRouter);
+  // #154 — Atomic ownership transfers
+  app.use("/api/transfers", transfersRouter);
+  // #155 — Immutable changelog
+  app.use("/api/changelog", changelogRouter);
+  // #156 — Dispute state machine
+  app.use("/api/disputes", disputesRouter);
   app.use(errorHandler);
   return app;
 }

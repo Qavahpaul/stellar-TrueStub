@@ -1,6 +1,6 @@
 "use client";
 
-import type { EventListing } from "@/@types/event";
+import type { EventListing } from "@/types/event";
 import TicketListingGrid from "@/components/events/TicketListingGrid";
 import SectionTabs from "@/components/events/SectionTabs";
 import ListingFilterSidebar from "@/components/events/ListingFilterSidebar";
