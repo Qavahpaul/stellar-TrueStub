@@ -28,35 +28,18 @@ yarn-error.log*
 !.env.example
 !apps/backend/.env.example
 
-# test artifacts
-coverage/
-**/coverage/
+# rust / soroban contracts build output
+**/target/
+
+# test snapshots (Jest + Rust/Soroban)
 **/__snapshots__/
 **/test_snapshots/
-*.snap
-junit.xml
-**/junit.xml
 
 # IDE / editor
 .idea/
 .vscode/
-*.iml
-*.suo
-*.user
-.project
-.classpath
+*.swp
+*.swo
 
-# OS
+# OS artefacts
 .DS_Store
-*.pem
-
-# Next.js / build output (workspace-level, belt-and-suspenders)
-**/.next/
-**/out/
-**/build/
-
-# typescript incremental build info
-*.tsbuildinfo
-
-# rust / soroban contracts build output
-**/target/
