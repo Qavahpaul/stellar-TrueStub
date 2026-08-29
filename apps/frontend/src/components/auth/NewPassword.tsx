@@ -9,34 +9,10 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import Illustration from "@/components/auth/ui/Illustration";
-import zxcvbn from "zxcvbn";
-
-const STRENGTH_LABELS = ["Very weak", "Weak", "Fair", "Strong", "Very strong"];
-const STRENGTH_COLORS = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-yellow-500",
-  "bg-lime-500",
-  "bg-green-500",
-];
-
-function PasswordStrengthBar({ score }: { score: number }) {
-  return (
-    <div className="space-y-1" aria-label={`Password strength: ${STRENGTH_LABELS[score]}`}>
-      <div className="flex gap-1">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-              i <= score ? STRENGTH_COLORS[score] : "bg-gray-200 dark:bg-gray-700"
-            }`}
-          />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">{STRENGTH_LABELS[score]}</p>
-    </div>
-  );
-}
+import {
+  PasswordStrengthMeter,
+  getPasswordScore,
+} from "@/components/auth/ui/PasswordStrengthMeter";
 
 export default function NewPassword() {
   const [password, setPassword] = useState("");

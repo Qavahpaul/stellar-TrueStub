@@ -19,6 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Illustration from "@/components/auth/ui/Illustration";
+import {
+  PasswordStrengthMeter,
+  getPasswordScore,
+} from "@/components/auth/ui/PasswordStrengthMeter";
 import Cookies from "js-cookie";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import LanguageSwitcher from "@/components/language/LanguageSwitcher";
@@ -99,6 +103,14 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    // Minimum strength gate — must be at least "Fair" (score >= 2)
+    if (getPasswordScore(password) < 2) {
+      toast.error(t("auth.passwordTooWeak"), { duration: 4000 });
+      setError(t("auth.passwordTooWeak"));
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Step 1 — create Firebase user
@@ -281,9 +293,7 @@ export default function RegisterPage() {
                   clearError();
                 }}
               />
-              {passwordStrength >= 0 && (
-                <PasswordStrengthBar score={passwordStrength} />
-              )}
+              <PasswordStrengthMeter password={password} />
             </div>
 
             <Button
